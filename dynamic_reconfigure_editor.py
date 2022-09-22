@@ -1,5 +1,4 @@
 import ast
-from logging import PlaceHolder
 import sys
 import streamlit as st
 import streamlit.web.cli as stcli
@@ -21,6 +20,7 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
     def update_one(param_name: str):
         value = st.session_state[f"slider_{param_name}"]
         new_config = client.update_configuration({param_name: value})
+        create_client_and_display(client.name)
 
     param_type = param['type']
     param_name = param['name']
@@ -46,6 +46,7 @@ def render_options(client: drc.Client, param):
         name, value = st.session_state[f"options_{param_name}"]
         # st.write(f"selected {value}")
         new_config = client.update_configuration({param_name: value})
+        create_client_and_display(client.name)
 
     enum_dict_as_str = param['edit_method']
     enum_dict = ast.literal_eval(enum_dict_as_str)
@@ -122,17 +123,33 @@ def refresh_servers(container, should_empty: bool) -> None:
         container.button(label=server, on_click=create_client_and_display, args=(server, ), key=key)
 
 
+def create_button():
+
+    def adjust_value():
+        value = st.session_state["test_button"]
+        st.write(f"You pressed, current state {value}")
+
+    def read_slider():
+        value = st.session_state["test_slider"]
+        st.write(f"Slider, current value {value}")
+
+    st.slider(label="param_name", min_value=0, max_value=10, step=1, value=5, key=f"test_slider", on_change=read_slider)
+    st.button(label="Adjust value", on_click=adjust_value, key="test_button")
+
+
 def main():
     # placeholder = container.empty()
     # title_container = placeholder.container()
     # other_container = placeholder.container()
-    st.sidebar.markdown("# Dynamic reconfigure editor 💡")
     # st.sidebar.button("Refresh servers", on_click=refresh_servers, args=(
     #     placeholder,
     #     title_container,
     #     True,
     # ))
     # title_container.text_input("Search node")
+    # create_button()
+
+    st.sidebar.markdown("# Dynamic reconfigure editor 💡")
     container = st.sidebar.container()
     container.subheader("List of available servers")
     refresh_servers(container, False)
