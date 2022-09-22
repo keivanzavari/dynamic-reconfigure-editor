@@ -34,18 +34,36 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
     if isinstance(min_value, int):
         step = math.ceil(step)
     key = f"slider_{param_name.replace('/','_')}"
-    return st.slider(label=param_name,
-                     min_value=min_value,
-                     max_value=max_value,
-                     step=step,
-                     value=value,
-                     key=key,
-                     on_change=update_one,
-                     args=(
-                         client,
-                         key,
-                         param_name,
-                     ))
+    col_1, col_2 = st.columns(2)
+    with col_1:
+        st.slider(label=param_name,
+                  min_value=min_value,
+                  max_value=max_value,
+                  step=step,
+                  value=value,
+                  key=key,
+                  on_change=update_one,
+                  args=(
+                      client,
+                      key,
+                      param_name,
+                  ))
+    with col_2:
+        key = f"num_input_{param_name.replace('/','_')}"
+
+        st.number_input(label=param_name,
+                        min_value=min_value,
+                        max_value=max_value,
+                        value=value,
+                        step=step,
+                        key=key,
+                        help=param['description'],
+                        on_change=update_one,
+                        args=(
+                            client,
+                            key,
+                            param_name,
+                        ))
 
 
 def render_options(client: drc.Client, param):
