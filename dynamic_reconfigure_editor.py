@@ -11,8 +11,12 @@ from typing import Any, Dict, List
 import time
 
 
-def render_slider(client: drc.Client, param: Dict[str, Any]):
+def get_value(client: drc.Client, param_name):
     config = client.get_configuration()
+    return config[param_name]
+
+
+def render_slider(client: drc.Client, param: Dict[str, Any]):
 
     def update_one(param_name: str):
         value = st.session_state[f"slider_{param_name}"]
@@ -20,7 +24,7 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
 
     param_type = param['type']
     param_name = param['name']
-    value = config[param_name]
+    value = get_value(client, param_name)
     min_value = param['min']
     max_value = param['max']
     step = (max_value - min_value) / 10.0
@@ -39,19 +43,27 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
 def render_options(client: drc.Client, param):
 
     def update_one(param_name: str):
-        value = st.session_state[f"options_{param_name}"]
-        st.write(f"selected {value}")
+        name, value = st.session_state[f"options_{param_name}"]
+        # st.write(f"selected {value}")
+        new_config = client.update_configuration({param_name: value})
 
     enum_dict_as_str = param['edit_method']
     enum_dict = ast.literal_eval(enum_dict_as_str)
-
-    # container = st.container()
-    names = []
-    for d in enum_dict['enum']:
-        names.append(f"{d['name']} ({d['value']})")
+    # rospy.logwarn(param)
     param_name = param['name']
+
+    names = []
+    idx = 0
+    value_idx = idx
+    current_value = get_value(client, param_name=param_name)
+    for d in enum_dict['enum']:
+        names.append((d['name'], d['value']))
+        if d['value'] == current_value:
+            value_idx = idx
+        idx += 1
     option = st.selectbox(label=param_name,
                           options=names,
+                          index=value_idx,
                           key=f"options_{param_name}",
                           on_change=update_one,
                           args=(param_name, ))
@@ -64,8 +76,8 @@ def render_checkbox(client: drc.Client, param):
         value = st.session_state[f"options_{param_name}"]
         new_config = client.update_configuration({param_name: value})
 
-    st.checkbox(label=param['name'],
-                value=param['default'],
+    st.checkbox(label=param_name,
+                value=get_value(client, param_name),
                 help=param['description'],
                 on_change=update_one,
                 key=f"options_{param_name}")
