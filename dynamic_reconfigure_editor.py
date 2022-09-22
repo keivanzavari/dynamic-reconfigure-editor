@@ -14,12 +14,17 @@ def get_value(client: drc.Client, param_name):
     return config[param_name]
 
 
-def render_slider(client: drc.Client, param: Dict[str, Any]):
+def update_one(client: drc.Client, key: str, param_name: str) -> None:
+    state = st.session_state[key]
+    value = state
+    if isinstance(state, tuple):
+        value = state[1]
 
-    def update_one(param_name: str):
-        value = st.session_state[f"slider_{param_name}"]
-        client.update_configuration({param_name: value})
-        create_client_and_display(client.name)
+    client.update_configuration({param_name: value})
+    create_client_and_display(client.name)
+
+
+def render_slider(client: drc.Client, param: Dict[str, Any]):
 
     param_name = param['name']
     value = get_value(client, param_name)
@@ -28,22 +33,22 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
     step = (max_value - min_value) / 10.0
     if isinstance(min_value, int):
         step = math.ceil(step)
+    key = f"slider_{param_name.replace('/','_')}"
     return st.slider(label=param_name,
                      min_value=min_value,
                      max_value=max_value,
                      step=step,
                      value=value,
-                     key=f"slider_{param_name}",
+                     key=key,
                      on_change=update_one,
-                     args=(param_name, ))
+                     args=(
+                         client,
+                         key,
+                         param_name,
+                     ))
 
 
 def render_options(client: drc.Client, param):
-
-    def update_one(param_name: str):
-        _, value = st.session_state[f"options_{param_name}"]
-        client.update_configuration({param_name: value})
-        create_client_and_display(client.name)
 
     enum_dict_as_str = param['edit_method']
     enum_dict = ast.literal_eval(enum_dict_as_str)
@@ -58,26 +63,33 @@ def render_options(client: drc.Client, param):
         if d['value'] == current_value:
             value_idx = idx
         idx += 1
+
+    key = f"options_{param_name.replace('/','_')}"
     st.selectbox(label=param_name,
                  options=names,
                  index=value_idx,
-                 key=f"options_{param_name}",
+                 key=key,
                  on_change=update_one,
-                 args=(param_name, ))
+                 args=(
+                     client,
+                     key,
+                     param_name,
+                 ))
 
 
 def render_checkbox(client: drc.Client, param):
     param_name = param['name']
-
-    def update_one():
-        value = st.session_state[f"options_{param_name}"]
-        client.update_configuration({param_name: value})
-
+    key = f"checkbox_{param_name.replace('/','_')}"
     st.checkbox(label=param_name,
                 value=get_value(client, param_name),
                 help=param['description'],
+                key=key,
                 on_change=update_one,
-                key=f"options_{param_name}")
+                args=(
+                    client,
+                    key,
+                    param_name,
+                ))
 
 
 def create_client_and_display(server):
