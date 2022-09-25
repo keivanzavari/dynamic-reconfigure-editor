@@ -6,3 +6,5 @@
 This small tool is inspired by two other projects that I found on github:
 * [_web_dyn_reconf_](https://github.com/awesomebytes/web_dyn_reconf). This is no longer maintained and unfortunately doesn't work with the latest remi version.
 * And [_Dynamic Reconfigure Web_](https://github.com/nobleo/dynamic-reconfigure-web) is made with Javascript and seems to work nicely. Unfortunately doesn't work with `enums`.
+
+![Screenshot](docs/screenshot.jpg "Screenshot")

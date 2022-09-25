@@ -46,6 +46,7 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
                   max_value=max_value,
                   step=step,
                   value=value,
+                  help=param['description'],
                   key=key,
                   on_change=update_one,
                   args=(
@@ -92,6 +93,7 @@ def render_options(client: drc.Client, param):
                  options=names,
                  index=value_idx,
                  key=key,
+                 help=param['description'],
                  on_change=update_one,
                  args=(
                      client,
@@ -113,6 +115,21 @@ def render_checkbox(client: drc.Client, param):
                     key,
                     param_name,
                 ))
+
+
+def render_text_input(client, param):
+    param_name = param['name']
+    key = f"txt_input_{param_name.replace('/','_')}"
+    st.text_input(label=param_name,
+                  value=get_value(client, param_name),
+                  help=param['description'],
+                  key=key,
+                  on_change=update_one,
+                  args=(
+                      client,
+                      key,
+                      param_name,
+                  ))
 
 
 def create_client_and_display(server):
@@ -138,8 +155,7 @@ def create_client_and_display(server):
         elif param['type'] == 'bool':
             render_checkbox(client, param)
         else:
-            st.markdown(f"#### `NOT IMPLEMENTED` 🛠")
-            st.write(param)
+            render_text_input(client, param)
 
 
 def refresh_servers(container) -> None:
