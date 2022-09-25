@@ -1,7 +1,12 @@
 import ast
 import sys
+import packaging.version
 import streamlit as st
-import streamlit.web.cli as stcli
+
+if packaging.version.parse(st.__version__) <= packaging.version.parse('1.10.0'):
+    import streamlit.cli as stcli
+else:
+    import streamlit.web.cli as stcli
 from dynamic_reconfigure import find_reconfigure_services
 from dynamic_reconfigure import client as drc
 import rospy
