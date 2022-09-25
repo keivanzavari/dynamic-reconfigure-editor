@@ -46,6 +46,7 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
                   max_value=max_value,
                   step=step,
                   value=value,
+                  help=param['description'],
                   key=key,
                   on_change=update_one,
                   args=(
@@ -92,6 +93,7 @@ def render_options(client: drc.Client, param):
                  options=names,
                  index=value_idx,
                  key=key,
+                 help=param['description'],
                  on_change=update_one,
                  args=(
                      client,
