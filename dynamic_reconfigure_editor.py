@@ -11,11 +11,11 @@ from dynamic_reconfigure import find_reconfigure_services
 from dynamic_reconfigure import client as drc
 import rospy
 import math
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
-def get_value(client: drc.Client, param_name):
-    config = client.get_configuration()
+def get_value(client: drc.Client, param_name: str) -> Any:
+    config: Dict[str, Any] = client.get_configuration()
     return config[param_name]
 
 
@@ -26,10 +26,10 @@ def update_one(client: drc.Client, key: str, param_name: str) -> None:
         value = state[1]
 
     client.update_configuration({param_name: value})
-    create_client_and_display(client.name)
+    create_client_and_display(client, client.name)
 
 
-def render_slider(client: drc.Client, param: Dict[str, Any]):
+def render_slider(client: drc.Client, param: Dict[str, Any]) -> None:
 
     param_name = param['name']
     value = get_value(client, param_name)
@@ -46,7 +46,6 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
                   max_value=max_value,
                   step=step,
                   value=value,
-                  help=param['description'],
                   key=key,
                   on_change=update_one,
                   args=(
@@ -72,7 +71,7 @@ def render_slider(client: drc.Client, param: Dict[str, Any]):
                         ))
 
 
-def render_options(client: drc.Client, param):
+def render_options(client: drc.Client, param: Dict[str, Any]) -> None:
 
     enum_dict_as_str = param['edit_method']
     enum_dict = ast.literal_eval(enum_dict_as_str)
@@ -102,7 +101,7 @@ def render_options(client: drc.Client, param):
                  ))
 
 
-def render_checkbox(client: drc.Client, param):
+def render_checkbox(client: drc.Client, param: Dict[str, Any]) -> None:
     param_name = param['name']
     key = f"checkbox_{param_name.replace('/','_')}"
     st.checkbox(label=param_name,
@@ -117,7 +116,7 @@ def render_checkbox(client: drc.Client, param):
                 ))
 
 
-def render_text_input(client, param):
+def render_text_input(client: drc.Client, param: Dict[str, Any]) -> None:
     param_name = param['name']
     key = f"txt_input_{param_name.replace('/','_')}"
     st.text_input(label=param_name,
@@ -132,9 +131,24 @@ def render_text_input(client, param):
                   ))
 
 
-def create_client_and_display(server):
+def create_client(server: str) -> drc.Client:
+    return drc.Client(server, timeout=2.0)
+
+
+def get_or_create_client(client: Optional[drc.Client], server: str) -> drc.Client:
+    if client is None:
+        return create_client(server)
+
+    if client.name == server:
+        return client
+
+    client.close()
+    return create_client(server)
+
+
+def create_client_and_display(curr_client: drc.Client, server: str) -> None:
     st.markdown(f"### Configuration for `{server}` ⚙️")
-    client = drc.Client(server, timeout=2.0)
+    client = get_or_create_client(curr_client, server)
     desc = client.get_group_descriptions(timeout=1.0)
     failure_msg = f"failure in client {client.name}"
     if desc is None:
@@ -162,11 +176,13 @@ def refresh_servers(container) -> None:
     servers = find_reconfigure_services()
     for server in servers:
         key = f"button_{server.replace('/','_')}"
-        container.button(label=server, on_click=create_client_and_display, args=(server, ), key=key)
+        container.button(label=server, on_click=create_client_and_display, args=(
+            None,
+            server,
+        ), key=key)
 
 
-def main():
-
+def main() -> None:
     st.sidebar.markdown("# Dynamic reconfigure editor 💡")
     container = st.sidebar.container()
     container.subheader("List of available servers")
