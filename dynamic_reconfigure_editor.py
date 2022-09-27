@@ -161,10 +161,9 @@ def render_parameters(client: drc.Client, params_list: List[Dict[str, Any]]):
 
 
 def render_for_groups(client: drc.Client, group: dre.Config) -> None:
-    with st.expander(f"Group {group['name']}"):
+    with st.expander(f"Group {group['name']}", expanded=True):
         params = group.get('parameters')
         render_parameters(client, params)
-        # st.markdown("--------")
 
 
 def create_client_and_display(curr_client: drc.Client, server: str) -> None:
