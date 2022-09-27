@@ -183,6 +183,19 @@ def refresh_servers(container) -> None:
 
 
 def main() -> None:
+    if packaging.version.parse(st.__version__) <= packaging.version.parse('1.12.0'):
+        st.markdown("""
+        <style>
+        [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        width: 500px;
+        }
+        [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+        width: 500px;
+        margin-left: -500px;
+        }
+        </style>
+        """,
+                    unsafe_allow_html=True)
     st.sidebar.markdown("# Dynamic reconfigure editor 💡")
     container = st.sidebar.container()
     container.subheader("List of available servers")
