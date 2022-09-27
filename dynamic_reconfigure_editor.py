@@ -176,12 +176,12 @@ def create_client_and_display(curr_client: drc.Client, server: str) -> None:
         st.warning(failure_msg, icon="⚠️")
         rospy.logerr(failure_msg)
         return
-    params_list = desc.get('parameters')
-    if params_list is None:
+    parameters = desc.get('parameters')
+    if parameters is None:
         st.warning(failure_msg, icon="⚠️")
         rospy.logerr(failure_msg)
         return
-    render_parameters(client, params_list)
+    render_parameters(client, parameters)
 
     groups: dre.Config = desc.get('groups')
     if groups:
