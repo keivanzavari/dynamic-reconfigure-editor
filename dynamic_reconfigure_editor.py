@@ -200,6 +200,12 @@ def refresh_servers(container) -> None:
 
 
 def main() -> None:
+    st.set_page_config(
+        page_title="Dynamic reconfigure editor",
+        page_icon="⛑",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
     if packaging.version.parse(st.__version__) <= packaging.version.parse('1.12.0'):
         st.markdown("""
         <style>
