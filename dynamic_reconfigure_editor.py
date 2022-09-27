@@ -8,10 +8,11 @@ if packaging.version.parse(st.__version__) <= packaging.version.parse('1.10.0'):
 else:
     import streamlit.web.cli as stcli
 from dynamic_reconfigure import find_reconfigure_services
+from dynamic_reconfigure import encoding as dre
 from dynamic_reconfigure import client as drc
 import rospy
 import math
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 
 def get_value(client: drc.Client, param_name: str) -> Any:
@@ -146,20 +147,7 @@ def get_or_create_client(client: Optional[drc.Client], server: str) -> drc.Clien
     return create_client(server)
 
 
-def create_client_and_display(curr_client: drc.Client, server: str) -> None:
-    st.markdown(f"### Configuration for `{server}` ⚙️")
-    client = get_or_create_client(curr_client, server)
-    desc = client.get_group_descriptions(timeout=1.0)
-    failure_msg = f"failure in client {client.name}"
-    if desc is None:
-        st.warning(failure_msg, icon="⚠️")
-        rospy.logerr(failure_msg)
-        return
-    params_list = desc.get('parameters')
-    if params_list is None:
-        st.warning(failure_msg, icon="⚠️")
-        rospy.logerr(failure_msg)
-        return
+def render_parameters(client: drc.Client, params_list: List[Dict[str, Any]]):
 
     for _, param in enumerate(params_list):
         if param['edit_method'] != '':
@@ -170,6 +158,35 @@ def create_client_and_display(curr_client: drc.Client, server: str) -> None:
             render_checkbox(client, param)
         else:
             render_text_input(client, param)
+
+
+def render_for_groups(client: drc.Client, group: dre.Config) -> None:
+    with st.expander(f"Group {group['name']}", expanded=True):
+        params = group.get('parameters')
+        render_parameters(client, params)
+
+
+def create_client_and_display(curr_client: drc.Client, server: str) -> None:
+    st.markdown(f"### Configuration for `{server}` ⚙️")
+    client = get_or_create_client(curr_client, server)
+    desc: dre.Config = client.get_group_descriptions(timeout=1.0)
+
+    failure_msg = f"failure in client {client.name}"
+    if desc is None:
+        st.warning(failure_msg, icon="⚠️")
+        rospy.logerr(failure_msg)
+        return
+    parameters = desc.get('parameters')
+    if parameters is None:
+        st.warning(failure_msg, icon="⚠️")
+        rospy.logerr(failure_msg)
+        return
+    render_parameters(client, parameters)
+
+    groups: dre.Config = desc.get('groups')
+    if groups:
+        for group in groups.values():
+            render_for_groups(client, group)
 
 
 def refresh_servers(container) -> None:
@@ -183,6 +200,12 @@ def refresh_servers(container) -> None:
 
 
 def main() -> None:
+    st.set_page_config(
+        page_title="Dynamic reconfigure editor",
+        page_icon="⛑",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
     if packaging.version.parse(st.__version__) <= packaging.version.parse('1.12.0'):
         st.markdown("""
         <style>
