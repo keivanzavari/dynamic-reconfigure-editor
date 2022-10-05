@@ -189,23 +189,28 @@ def create_client_and_display(curr_client: drc.Client, server: str) -> None:
             render_for_groups(client, group)
 
 
-def refresh_servers(container) -> None:
-    servers = find_reconfigure_services()
-    for server in servers:
+def filter_servers_list(container: st.delta_generator.DeltaGenerator, key: str , available_servers: List[str]):
+    state = st.session_state[key]
+    servers = [server for server in available_servers if state in server]
+    render_servers(container=container, candidate_servers=servers)
+
+
+
+def render_search_input(container: st.delta_generator.DeltaGenerator):
+    key = "search_input"
+    container.text_input(label="search_input", key=key)
+    return key
+
+
+def render_servers(container: st.delta_generator.DeltaGenerator, candidate_servers: List[str] = []) -> None:
+    for server in candidate_servers:
         key = f"button_{server.replace('/','_')}"
         container.button(label=server, on_click=create_client_and_display, args=(
             None,
             server,
         ), key=key)
 
-
-def main() -> None:
-    st.set_page_config(
-        page_title="Dynamic reconfigure editor",
-        page_icon="⛑",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
+def render_sidebar() -> st.delta_generator.DeltaGenerator:
     if packaging.version.parse(st.__version__) <= packaging.version.parse('1.12.0'):
         st.markdown("""
         <style>
@@ -219,10 +224,25 @@ def main() -> None:
         </style>
         """,
                     unsafe_allow_html=True)
-    st.sidebar.markdown("# Dynamic reconfigure editor 💡")
-    container = st.sidebar.container()
+    placeholder = st.sidebar.empty()
+    container = placeholder.container()
+    container.markdown("# Dynamic reconfigure editor 💡")
     container.subheader("List of available servers")
-    refresh_servers(container)
+    return container
+
+def main() -> None:
+    st.set_page_config(
+        page_title="Dynamic reconfigure editor",
+        page_icon="⛑",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    container = render_sidebar()
+    key = render_search_input(container)
+    if st.session_state[key]:
+        filter_servers_list(container=container, key=key, available_servers=find_reconfigure_services())
+    else:
+        render_servers(container, candidate_servers=find_reconfigure_services())
 
 
 if __name__ == '__main__':
