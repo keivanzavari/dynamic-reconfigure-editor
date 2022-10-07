@@ -1,3 +1,8 @@
+Moved to 
+
+https://gitlab.com/seervision-public/dynamic-reconfigure-editor
+
+---
 
 ## Web based dynamic reconfigure editor
 
